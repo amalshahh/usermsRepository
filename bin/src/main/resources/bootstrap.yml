@@ -1,0 +1,20 @@
+server:
+  port: 8005
+  
+spring:
+  application:
+    name: userMS
+  cloud:
+    consul:
+      discovery:
+        hostname: localhost
+      config:
+        fail-fast: false
+        enabled: true
+        prefixes: config
+        defaultContext: application
+        data-key: data
+        profileSeparator: '::'
+        format: YAML 
+        
+        
