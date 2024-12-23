@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Consul service for service registry and discovery
+  consul:
+    image: hashicorp/consul:1.19.2
+    container_name: consul
+    ports:
+      - "8500:8500"  # Consul UI and API
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    command: "agent -server -bootstrap-expect=1 -client=0.0.0.0 -ui"
+    networks:
+      - app_network
+    restart: always  # Automatically restart on failure
+
+  # MySQL service
+  mysql:
+    image: mysql:9.0.1
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: estimo_userms
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persist MySQL data
+    networks:
+      - app_network
+    restart: always  # Automatically restart on failure
+
+  # Spring Boot application
+  springboot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot-app
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/estimo_userms
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+    depends_on:
+      - mysql
+      - consul
+    ports:
+      - "8006:8006"
+    networks:
+      - app_network
+    restart: always  # Automatically restart on failure
+
+# Define a shared network between the containers
+networks:
+  app_network:
+    driver: bridge
+
+# Volumes to persist MySQL data
+volumes:
+  mysql-data:
+  consul-data:
+
+
